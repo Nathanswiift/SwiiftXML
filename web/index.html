@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SwiiftXML</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%232563eb'/%3E%3Cpath d='M9 11l-4 5 4 5M23 11l4 5-4 5M18 8l-4 16' stroke='white' stroke-width='2.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header id="top">
+  <div class="brand" title="SwiiftXML"><span class="logo">&lt;/&gt;</span><span>Swiift<b>XML</b></span></div>
+  <div id="fileinfo" class="fileinfo"></div>
+  <div class="grow"></div>
+  <label class="viewsel" id="viewWrap" hidden>Rows:
+    <select id="viewSel" title="Which elements count as rows"></select>
+  </label>
+  <div class="search" id="searchWrap" hidden>
+    <input id="q" type="search" placeholder="Search…  (Ctrl+F)" autocomplete="off" spellcheck="false">
+    <button id="qcase" class="toggle" title="Match case">Aa</button>
+    <button id="qgo" title="Find next (Enter / F3)">Find next</button>
+  </div>
+  <button id="openBtn" class="primary" title="Open a file (Ctrl+O)">Open file…</button>
+  <button id="helpBtn" class="icon" title="Keyboard shortcuts (?)">?</button>
+  <button id="quitBtn" class="icon" title="Quit SwiiftXML">⏻</button>
+</header>
+<div id="progress"><div id="progbar"></div></div>
+
+<main id="main" hidden>
+  <section id="rowsPane" class="pane">
+    <div class="pane-head">
+      <span>Rows</span><span id="rowsCount" class="muted"></span>
+    </div>
+    <div id="rowList" class="rowlist"></div>
+    <div class="pager">
+      <button id="pgFirst" title="First page">«</button>
+      <button id="pgPrev" title="Previous page">‹</button>
+      <span id="pgInfo"></span>
+      <button id="pgNext" title="Next page">›</button>
+      <button id="pgLast" title="Last page">»</button>
+      <input id="gotoRow" type="text" inputmode="numeric" placeholder="Go to row #" title="Type a row number and press Enter (G)">
+    </div>
+  </section>
+  <div id="splitter" title="Drag to resize"></div>
+  <section id="treePane" class="pane">
+    <div class="pane-head tree-head">
+      <button id="rowPrev" title="Previous row (P)">▲ Prev</button>
+      <button id="rowNext" title="Next row (N)">Next ▼</button>
+      <span id="rowTitle" class="rowtitle"></span>
+      <div class="grow"></div>
+      <button id="expAll" title="Expand everything in this row (*)">Expand all</button>
+      <button id="colAll" title="Collapse everything (-)">Collapse all</button>
+      <button id="rowXml" title="Show the XML of this row">View XML</button>
+      <button id="rowSave" title="Save this row as a separate XML file">Save row</button>
+    </div>
+    <div id="tree" class="tree" tabindex="0">
+      <div id="treeSpacer"></div>
+      <div id="treeRows"></div>
+      <div id="treeMsg" class="treemsg"></div>
+    </div>
+    <div id="details" class="details"></div>
+  </section>
+</main>
+
+<div id="welcome" class="welcome" hidden>
+  <div class="hero">
+    <div class="biglogo">&lt;/&gt;</div>
+    <h1>Swiift<b>XML</b></h1>
+    <p>Browse XML files of any size, one row at a time.</p>
+  </div>
+  <div id="welcomeOpen"></div>
+</div>
+
+<footer id="statusbar">
+  <span id="statusText"></span>
+  <span class="grow"></span>
+  <span id="statusRight" class="muted">Press <kbd>?</kbd> for keyboard shortcuts</span>
+</footer>
+
+<!-- Open file dialog (also embedded in the welcome screen) -->
+<template id="openTpl">
+  <div class="opener">
+    <h2>Open an XML file</h2>
+    <div class="pathbar">
+      <input class="pathIn" type="text" placeholder="Paste the full path of a file or folder, e.g. C:\Data\export.xml" spellcheck="false">
+      <button class="pathGo primary">Open</button>
+    </div>
+    <div class="recent"></div>
+    <div class="browser">
+      <div class="crumbs">
+        <button class="upBtn" title="Up one folder">⬆ Up</button>
+        <button class="homeBtn" title="Home folder">⌂ Home</button>
+        <span class="curDir"></span>
+        <label class="onlyxml"><input type="checkbox" class="onlyXml" checked> Only .xml files</label>
+      </div>
+      <div class="dirList"></div>
+    </div>
+    <p class="hint">Tip: in Windows Explorer, hold <kbd>Shift</kbd>, right-click a file and choose <i>Copy as path</i>, then paste it above.
+      You can also drag an XML file onto the SwiiftXML program icon.</p>
+  </div>
+</template>
+
+<div id="openDlg" class="modal" hidden>
+  <div class="dlg wide"><button class="close" data-close>✕</button><div id="openHost"></div></div>
+</div>
+
+<div id="xmlDlg" class="modal" hidden>
+  <div class="dlg wide tall">
+    <button class="close" data-close>✕</button>
+    <div class="xmlhead">
+      <h2 id="xmlTitle">XML</h2>
+      <label><input type="checkbox" id="xmlPretty" checked> Formatted</label>
+      <div class="grow"></div>
+      <button id="xmlCopy">Copy</button>
+      <button id="xmlSave">Save as file</button>
+    </div>
+    <div id="xmlNote" class="note" hidden></div>
+    <pre id="xmlBody" class="xml"></pre>
+  </div>
+</div>
+
+<div id="helpDlg" class="modal" hidden>
+  <div class="dlg">
+    <button class="close" data-close>✕</button>
+    <h2>Keyboard shortcuts</h2>
+    <table class="keys">
+      <tr><th colspan="2">Rows</th></tr>
+      <tr><td><kbd>N</kbd> / <kbd>P</kbd></td><td>Next / previous row (works everywhere)</td></tr>
+      <tr><td><kbd>↓</kbd> <kbd>↑</kbd></td><td>Next / previous row (in the row list)</td></tr>
+      <tr><td><kbd>Page Down</kbd> <kbd>Page Up</kbd></td><td>Jump a page of rows</td></tr>
+      <tr><td><kbd>G</kbd></td><td>Go to a row number</td></tr>
+      <tr><td><kbd>Tab</kbd></td><td>Switch between the row list and the tree</td></tr>
+      <tr><th colspan="2">Tree</th></tr>
+      <tr><td><kbd>↓</kbd> <kbd>↑</kbd></td><td>Move to the next / previous node</td></tr>
+      <tr><td><kbd>→</kbd></td><td>Open the node, or go to its first child</td></tr>
+      <tr><td><kbd>←</kbd></td><td>Close the node, or go to its parent</td></tr>
+      <tr><td><kbd>Enter</kbd> / <kbd>Space</kbd></td><td>Open / close the node</td></tr>
+      <tr><td><kbd>*</kbd> / <kbd>-</kbd></td><td>Expand everything below the node / collapse all</td></tr>
+      <tr><td><kbd>X</kbd></td><td>Show the XML of the selected node</td></tr>
+      <tr><td>Right-click / <kbd>Shift</kbd>+<kbd>F10</kbd></td><td>Menu with Sum, Count and Group by for the node</td></tr>
+      <tr><th colspan="2">Search</th></tr>
+      <tr><td><kbd>Ctrl</kbd>+<kbd>F</kbd> or <kbd>/</kbd></td><td>Search the whole file</td></tr>
+      <tr><td><kbd>Enter</kbd> / <kbd>F3</kbd></td><td>Find the next match</td></tr>
+      <tr><td><kbd>Esc</kbd></td><td>Stop searching / close dialogs</td></tr>
+    </table>
+    <p class="hint">Opened and closed nodes are remembered, so when you move to the next row
+      the same parts of the tree stay open and the same field stays selected.</p>
+    <p class="hint">To summarize, right-click a field (for example <i>Duration</i>) and choose <i>Sum</i> or <i>Count</i>.
+      In the window that opens you can group the result by one or more fields, for example <i>ClientNumber</i>
+      + <i>EmployeeNumber</i>.</p>
+    <p class="hint">Search looks through the raw XML text, so you can also search for tags such as <code>&lt;Status&gt;</code>.</p>
+  </div>
+</div>
+
+<div id="aggDlg" class="modal" hidden>
+  <div class="dlg wide tall">
+    <button class="close" data-close>✕</button>
+    <h2>Summarize</h2>
+    <div class="aggform">
+      <select id="aggFn" title="What to calculate">
+        <option value="sum">Sum</option>
+        <option value="count">Count</option>
+      </select>
+      <span>of</span>
+      <select id="aggValue" title="The field to sum or count"></select>
+      <span>grouped by</span>
+      <span id="aggGroups" class="agggroups"></span>
+      <button id="aggAddGroup" title="Group by one more field, e.g. ClientNumber + EmployeeNumber">＋ Add field</button>
+      <button id="aggRun" class="primary">Run</button>
+    </div>
+    <div id="aggScope" class="hint"></div>
+    <div id="aggProgress" class="aggprog" hidden>
+      <div class="track"><div class="fill"></div></div><span class="txt"></span><button id="aggStop">Stop</button>
+    </div>
+    <div id="aggHead" class="agghead"></div>
+    <div id="aggNotes" class="aggnotes"></div>
+    <div id="aggTable" class="aggtable"></div>
+    <div id="aggActions" class="aggactions" hidden>
+      <button id="aggCopy" title="Copy the table, for pasting into Excel">Copy table</button>
+      <button id="aggCsv" title="Save the table as a CSV file that opens in Excel">Save as CSV</button>
+    </div>
+  </div>
+</div>
+
+<div id="stopped" class="modal" hidden>
+  <div class="dlg"><h2>SwiiftXML is not running</h2><p>The program has been closed. Start SwiiftXML again to continue. You can close this tab.</p></div>
+</div>
+
+<div id="errDlg" class="modal" hidden>
+  <div class="dlg errbox" role="alertdialog" aria-labelledby="errTitle">
+    <div class="erricon">!</div>
+    <div class="errbody">
+      <h2 id="errTitle"></h2>
+      <p id="errMsg"></p>
+      <div class="dlgbtns"><button id="errAlt" hidden></button><button id="errOk" class="primary">OK</button></div>
+    </div>
+  </div>
+</div>
+
+<div id="ctxMenu" class="ctx" role="menu" hidden></div>
+<div id="toast"></div>
+<script src="app.js"></script>
+</body>
+</html>
